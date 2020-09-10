@@ -8,7 +8,7 @@ near-warchest-bot это скрипт для валидаторов [NEAR](https
 
 ## Установка
 
-**Установка зависимостей**
+### Установка зависимостей
 
 ```sudo apt update```
 
@@ -16,7 +16,7 @@ near-warchest-bot это скрипт для валидаторов [NEAR](https
 
 Так же у вас должен быть установлен [near-cli](https://github.com/near/near-cli), [залогиненный](https://github.com/nearprotocol/stakewars/blob/master/challenges/challenge001.md#1connect-near-cli-to-your-betanet-wallet) под ваш аккаунт 
 
-**Установка near-warchest-bot**
+### Установка near-warchest-bot
 
 ```git clone https://github.com/savelev1/near-warchest-bot.git /home/near/near-warchest-bot```
 
@@ -30,7 +30,7 @@ near-warchest-bot установится в директорию */home/near/nea
 
 ```nano config.json```
 
-**Описание параметров файла config.json**
+### Описание параметров файла config.json
 
 ⚠️ Внимание! Изменяйте только *configurable* секцию
  
@@ -50,7 +50,7 @@ near-warchest-bot установится в директорию */home/near/nea
 
 **Вам необходимо** вписать свой ```poolId``` и ```accountId``` в соответствующие поля в файле config.json
 
-**Настройка запуска near-warchest-bot с интервалом 1 час**
+### Настройка запуска near-warchest-bot с интервалом 1 час
 
 ```crontab -e```
 
@@ -58,7 +58,7 @@ near-warchest-bot установится в директорию */home/near/nea
 
 ```0 */1 * * * export NODE_ENV=betanet && /usr/bin/python3 /home/near/near-warchest-bot/near-warchest-bot.py > /tmp/near-warchest-bot.log 2>&1```
 
-**Установка завершена**
+**✅Установка завершена**
 
 Вы можете запустить скрипт вручную, чтобы убедится что все работает:
 
@@ -72,7 +72,7 @@ near-warchest-bot is a script for [NEAR](https://near.org/) validators that mana
 
 ## Installation
 
-**Installation of Dependency**
+### Installation of Dependency
 
 ```sudo apt update```
 
@@ -80,7 +80,7 @@ near-warchest-bot is a script for [NEAR](https://near.org/) validators that mana
 
 You should also have installed [near-cli](https://github.com/near/near-cli), and [logged](https://github.com/nearprotocol/stakewars/blob/master/challenges/challenge001.md#1connect-near-cli-to-your-betanet-wallet) in to your account 
 
-**Installation of near-warchest-bot**
+### Installation of near-warchest-bot
 
 ```git clone https://github.com/savelev1/near-warchest-bot.git /home/near/near-warchest-bot```
 
@@ -94,7 +94,7 @@ Open config.json to configure the script
 
 ```nano config.json```
 
-**Description of file parameters config.json**
+### Description of file parameters config.json
 
 ⚠️ Attention! Change only *configurable* section
  
@@ -114,7 +114,7 @@ Open config.json to configure the script
 
 **You need** to enter your ```polId``` and ```accountId``` in the corresponding fields in the config.json file
 
-**Setting the start of near-warchest-bot at 1 hour intervals**
+### Setting the start of near-warchest-bot at 1 hour intervals
 
 ```crontab -e```
 
@@ -122,7 +122,7 @@ In the Crontab edit window that opens add a new line to the end:
 
 ```0 */1 * * * export NODE_ENV=betanet && /usr/bin/python3 /home/near/near-warchest-bot/near-warchest-bot.py > /tmp/near-warchest-bot.log 2>&1```
 
-**Installation completed**
+**✅Installation completed**
 
 You can run the script manually to make sure that everything works:
 

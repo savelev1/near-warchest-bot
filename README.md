@@ -22,7 +22,7 @@ near-warchest-bot это скрипт, который управляет ваш�
 
 near-warchest-bot установится в директорию */home/near/near-warchest-bot*. Вы можете ее изменить на свое усмотрение.
 
-Откройте директорию в которую установился скрипт и создайте файл конфига из примера:
+Откройте директорию в которую установился скрипт и создайте файл config.json из config.example.json:
 
 ```cd /home/near/near-warchest-bot && cp config.example.json config.json```
 
@@ -38,11 +38,11 @@ near-warchest-bot установится в директорию */home/near/nea
 
 ```accountId``` - название аккаунта
 
-```network``` - сеть блокчейна
+```network``` - название сети блокчейна
 
 ```epochBlockLength``` - длина эпохи (на данный момент betanet = 10000, testnet = 43200, mainnet = 43200)
 
-```poolOverBalance``` - величина излишка на балансе (для подстраховки)
+```poolOverBalance``` - дополнительные токеыны NEAR для небольшого излишка на балансе (для подстраховки)
 
 ```enableLog``` - включен ли лог в файл
 
@@ -61,5 +61,69 @@ near-warchest-bot установится в директорию */home/near/nea
 **Установка завершена**
 
 Вы можете запустить скрипт вручную, чтобы убедится что все работает:
+
+```python3 /home/near/near-warchest-bot/near-warchest-bot.py```
+
+## Description [EN]
+
+near-warchest-bot is a script that manage your validator seat and maintain its number to one. It keeps logs, determines the reason for kicked out from the validator list, pings the pool.
+
+ ⚠️ Attention! The current pool balance is taken from the logs of the unstake method, because in the logs it is updated instantly, not after one epoch.
+
+## Installation
+
+**Installation of Dependency**
+
+```sudo apt update```
+
+```sudo apt install python3 git curl jq```
+
+You should also have installed [near-cli](https://github.com/near/near-cli)
+
+**Installation of near-warchest-bot**
+
+```git clone https://github.com/savelev1/near-warchest-bot.git /home/near/near-warchest-bot```
+
+near-warchest-bot will install in the directory */home/near/near-warchest-bot*. You can change it at your discretion.
+
+Open the directory where the script is installed and create an config.json file from the config.example.json:
+
+```cd /home/near/near-warchest-bot && cp config.example.json config.json```
+
+Open config.json to configure the script
+
+```nano config.json```
+
+**Description of file parameters config.json**
+
+⚠️ Attention! Change only *configurable* section
+ 
+```poolId``` - pool name
+
+```accountId``` - account name
+
+```network``` - network name of the blockchain
+
+```epochBlockLength``` - epoch length (at the moment betanet = 10000, testnet = 43200, mainnet = 43200)
+
+```poolOverBalance``` - additional NEAR tokens for small over balance (for insurance)
+
+```enableLog``` - enable logging in a file
+
+```logFileName``` - name of the log file
+
+**You need** to enter your ```polId``` and ```accountId``` in the corresponding fields in the config.json file
+
+**Setting the start of near-warchest-bot at 1 hour intervals**
+
+```crontab -e```
+
+In the Crontab edit window that opens add a new line to the end:
+
+```0 */1 * * * export NODE_ENV=betanet && /usr/bin/python3 /home/near/near-warchest-bot/near-warchest-bot.py > /tmp/near-warchest-bot.log 2>&1```
+
+**Installation completed**
+
+You can run the script manually to make sure that everything works:
 
 ```python3 /home/near/near-warchest-bot/near-warchest-bot.py```

@@ -14,7 +14,7 @@ near-warchest-bot это скрипт для валидаторов [NEAR](https
 
 ```sudo apt install python3 git curl jq```
 
-Так же у вас должен быть установлен [near-cli](https://github.com/near/near-cli)
+Так же у вас должен быть установлен [near-cli](https://github.com/near/near-cli), [залогиненный](https://github.com/nearprotocol/stakewars/blob/master/challenges/challenge001.md#1connect-near-cli-to-your-betanet-wallet) под ваш аккаунт 
 
 **Установка near-warchest-bot**
 
@@ -78,7 +78,7 @@ near-warchest-bot is a script for [NEAR](https://near.org/) validators that mana
 
 ```sudo apt install python3 git curl jq```
 
-You should also have installed [near-cli](https://github.com/near/near-cli)
+You should also have installed [near-cli](https://github.com/near/near-cli), and [logged](https://github.com/nearprotocol/stakewars/blob/master/challenges/challenge001.md#1connect-near-cli-to-your-betanet-wallet) in to your account 
 
 **Installation of near-warchest-bot**
 

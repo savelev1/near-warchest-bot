@@ -1,0 +1,15 @@
+{
+    "configurable": {
+        "poolId": "poolName.stakehouse.betanet", 
+        "accountId": "accounName.betanet", 
+        "network": "betanet", 
+        "epochBlockLength": 10000, 
+        "poolOverBalance": 500, 
+        "enableLog": true, 
+        "logFileName": "near-warchest-bot.log"
+    }, 
+    "lastEpochProgress": 1, 
+    "waitNextEpochCountForChangeBalance": 0, 
+    "currentWaitEpochCount": 0, 
+    "YNear": 1000000000000000000000000
+}

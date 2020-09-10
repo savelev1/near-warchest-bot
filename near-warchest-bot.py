@@ -34,8 +34,8 @@ def plexit():
 def getConfig():
     defaultConfig = {
         "configurable": {
-            "poolId": '',
-            "accountId": '',
+            "poolId": 'poolName.stakehouse.betanet',
+            "accountId": 'accounName.betanet',
             "network": 'betanet',
             "epochBlockLength": 10000,
             "poolOverBalance": 500,

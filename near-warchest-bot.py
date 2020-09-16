@@ -170,14 +170,16 @@ def pingPool():
 # Script body
 
 config = getConfig()
+os.environ["NODE_ENV"] = config["configurable"]["network"]
+
+poolId = config["configurable"]["poolId"]
+accountId = config["configurable"]["accountId"]
+printAndLog(f'Start script. Pool ID: {poolId}, Account ID: {accountId}, Network: {config["configurable"]["network"]}')
+
 lastEpochProgress = config['lastEpochProgress']
 epochProgress = getEpochProgress()
 config['lastEpochProgress'] = epochProgress
 saveConfig(config)
-
-poolId = config["configurable"]["poolId"]
-accountId = config["configurable"]["accountId"]
-printAndLog(f"Start script. Pool ID {poolId}, Account ID {accountId}")
 
 if isKickedOutPool():
     printAndLog("Pool is kicked out in next epoch")

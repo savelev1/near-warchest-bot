@@ -6,6 +6,7 @@ import datetime
 import json
 import subprocess
 import shlex
+import re
 
 configFileName = 'config.json';
 
@@ -32,6 +33,10 @@ def runCommand(commandString):
         "code": lastProc.returncode,
     }
     return result
+
+def escapeAnsi(line):
+    ansi_escape = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', line)
 
 def getFullPath(filename):
     return os.path.dirname(os.path.realpath(__file__)) + '/' + filename
@@ -72,7 +77,6 @@ def getConfig():
             "logFileName": 'near-warchest-bot.log',
         },
         "lastEpochProgress": 1,
-        "lastSeatPrice": 0,
         "YNear": 10 ** 24,
     }
     open(getFullPath(configFileName), 'a')
@@ -118,28 +122,21 @@ def getPoolSize():
         if isinstance(nextPoolSize, int):
             return nextPoolSize
     printAndLog("Can't get current pool balance. Probably pool is not a validator")
-    pingPool()
     #raise Exception("Can't get current pool balance")
     return 0;
 
-def getStakedBalance(fromString = ''): 
-    findStringBeforeStakedBalance = 'Contract total staked balance is ';
-    findStringAfterStakedBalance = '.';
-
-    response = ''
-    if len(fromString) > 0:
-        response = fromString
-    else:
-        response = runCommand('near call ' + poolId + ' unstake \'{"amount": "' + str(config["YNear"]) + '"}\' --accountId ' + accountId)["output"]
-
+def getStakedBalance(): 
+    findStringBeforeStakedBalance = "'";
+    findStringAfterStakedBalance = "'";
+    response = escapeAnsi(runCommand("near view " + poolId + " get_total_staked_balance '{}'")["output"])
     startPosition = response.find(findStringBeforeStakedBalance)
     if startPosition >= 0:
-        endPosition = response.find(findStringAfterStakedBalance, startPosition)
+        endPosition = response.find(findStringAfterStakedBalance, startPosition + 1)
         if endPosition >= 0:
             startBalancePosition = startPosition + len(findStringBeforeStakedBalance)
             if len(response[startBalancePosition:endPosition]):
                 return int(int(response[startBalancePosition:endPosition]) / config["YNear"])
-
+                
     printAndLog("Can't get staked balance")
     raise Exception("Can't get staked balance")
 
@@ -187,11 +184,9 @@ if isKickedOutPool():
 kickedOutReason = getKickedOutReason();
 if bool(kickedOutReason):
     printAndLog(f'Kicked out reason: {kickedOutReason}')
-    pingPool()
 
 if isNewValidatorInNextEpoch():
     printAndLog(f'Pool will try be a validator in next epoch')
-    pingPool()
 
 currentSeatPrice = getCurrentSeatPrice()
 nextSeatPrice = getNextSeatPrice()
@@ -202,9 +197,12 @@ printAndLog(f"Seat price: current {currentSeatPrice}, next {nextSeatPrice}, prop
 poolSize = getPoolSize()
 printAndLog(f"Pool size: {poolSize}")
 
+stakedBalance = getStakedBalance()
+printAndLog(f"Total Staked balance: {stakedBalance}")
+
 needUpdateBalance = False;
 
-if maxSeatPrice != config['lastSeatPrice']:
+if maxSeatPrice != stakedBalance - config["configurable"]["poolOverBalance"]:
     needUpdateBalance = True;
 
 if epochProgress < lastEpochProgress:
@@ -214,38 +212,31 @@ if needUpdateBalance == False:
     printAndLog(f'Wait next epoch. Epoch progress: {epochProgress} (previous {lastEpochProgress})')
     plexit()
 
-config['lastSeatPrice'] = maxSeatPrice;
-saveConfig(config)
+pingPool()
 
-stakedBalance = getStakedBalance()
-printAndLog(f"Staked balance: {stakedBalance}")
-
-needStake = maxSeatPrice - stakedBalance
+needStake = maxSeatPrice - (stakedBalance - config["configurable"]["poolOverBalance"])
 needStakeYNear = needStake * config["YNear"]
-
 if needStake == 0:
-    printAndLog(f"Pool size is equal to seat price ({stakedBalance} == {maxSeatPrice})")
+    printAndLog(f'Pool size is equal to seat price ({stakedBalance} - {config["configurable"]["poolOverBalance"]} == {maxSeatPrice})')
 else:
     if needStake < 0:
         needUnstakeYNear = needStakeYNear * -1
-        needUnstakeYNearWithReserve = needUnstakeYNear - config["configurable"]["poolOverBalance"] * config["YNear"]
-        if needUnstakeYNearWithReserve > 0:
-            needUnstakeWithReserve = needUnstakeYNearWithReserve / config["YNear"]
-            printAndLog(f"Unstake {needUnstakeYNearWithReserve} ({needUnstakeWithReserve}). Over balance " + str(config["configurable"]["poolOverBalance"]))
-            response = runCommand('near call ' + poolId + ' unstake \'{"amount": "' + str(needUnstakeYNearWithReserve) + '"}\' --accountId ' + accountId)
+        if needUnstakeYNear > 0:
+            needUnstake = needUnstakeYNear / config["YNear"]
+            printAndLog(f"Unstake {needUnstakeYNear} ({needUnstake}). Over balance " + str(config["configurable"]["poolOverBalance"]))
+            response = runCommand('near call ' + poolId + ' unstake \'{"amount": "' + str(needUnstakeYNear) + '"}\' --accountId ' + accountId)
             printAndLog(response["output"]);
             if (response["code"] == 0):
-                printAndLog(f'New Staked Balance: {getStakedBalance(response["output"])}')
+                printAndLog(f'New Staked Balance: {getStakedBalance()}')
         else:
             printAndLog("Can't unstake. Reached reserve limit. It's ok")
     else:
-        needStakeYNearWithReserve = needStakeYNear + config["configurable"]["poolOverBalance"] * config["YNear"]
-        needStakeWithReserve = needStakeYNearWithReserve / config["YNear"]
-        printAndLog(f"Stake {needStakeYNearWithReserve} ({needStakeWithReserve}). Over balance " + str(config["configurable"]["poolOverBalance"]))
-        response = runCommand('near call ' + poolId + ' stake \'{"amount": "' + str(needStakeYNearWithReserve) + '"}\' --accountId ' + accountId)
+        needStakeWithReserve = needStakeYNear / config["YNear"]
+        printAndLog(f"Stake {needStakeYNear} ({needStakeWithReserve}). Over balance " + str(config["configurable"]["poolOverBalance"]))
+        response = runCommand('near call ' + poolId + ' stake \'{"amount": "' + str(needStakeYNear) + '"}\' --accountId ' + accountId)
         printAndLog(response["output"]);
         if (response["code"] == 0):
-            printAndLog(f'New Staked Balance: {getStakedBalance(response["output"])}')
+            printAndLog(f'New Staked Balance: {getStakedBalance()}')
 
 printAndLog("Script ends \r\n\r\n")
 

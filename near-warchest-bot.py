@@ -4,10 +4,34 @@ import sys
 import os
 import datetime
 import json
+import subprocess
+import shlex
 
 configFileName = 'config.json';
 
 # Function definitions
+
+def runCommand(commandString):
+    commands = commandString.split("|")
+    procs = []
+    for command in commands:
+        args = shlex.split(command)
+        if len(procs) == 0:
+            procs.append(subprocess.Popen(args, stdout = subprocess.PIPE,  stderr = subprocess.STDOUT));
+        else:
+            procs.append(subprocess.Popen(args, stdin = procs[len(procs) - 1].stdout, stdout = subprocess.PIPE, stderr = subprocess.STDOUT));
+    
+    for i in range(len(procs)):
+        if i < len(procs) - 1:
+            procs[i].stdout.close()
+
+    lastProc = procs[len(procs) - 1]
+    
+    result = {
+        "output": lastProc.communicate()[0].decode("utf-8"),
+        "code": lastProc.returncode,
+    }
+    return result
 
 def getFullPath(filename):
     return os.path.dirname(os.path.realpath(__file__)) + '/' + filename
@@ -31,6 +55,11 @@ def plexit():
     printAndLog('exit()\r\n\r\n')
     exit()
 
+def mergeTwoDicts(x, y):
+    z = x.copy()
+    z.update(y)
+    return z
+
 def getConfig():
     defaultConfig = {
         "configurable": {
@@ -43,15 +72,14 @@ def getConfig():
             "logFileName": 'near-warchest-bot.log',
         },
         "lastEpochProgress": 1,
-        "waitNextEpochCountForChangeBalance": 0,
-        "currentWaitEpochCount": 0,
+        "lastSeatPrice": 0,
         "YNear": 10 ** 24,
     }
     open(getFullPath(configFileName), 'a')
     with open(getFullPath(configFileName), 'r') as file:
         if len(file.read()) > 0:
             file.seek(0, 0)
-            config = json.load(file)
+            config = mergeTwoDicts(defaultConfig, json.load(file))
         else:
             config = defaultConfig;
     return config
@@ -61,23 +89,23 @@ def saveConfig(config):
         json.dump(config, file)
 
 def getEpochProgress():
-    latestBlockHeight = int(os.popen(" curl --silent https://rpc." + config["configurable"]["network"] + ".near.org/status | jq .sync_info.latest_block_height ").read())
-    startHeight = int(os.popen(" curl --silent -d '{\"jsonrpc\": \"2.0\", \"method\": \"validators\", \"id\": \"dontcare\", \"params\": [null]}' -H 'Content-Type: application/json' https://rpc." + config["configurable"]["network"] + ".near.org | jq .result.epoch_start_height ").read())
+    latestBlockHeight = int(runCommand("curl --silent https://rpc." + config["configurable"]["network"] + ".near.org/status | jq .sync_info.latest_block_height")["output"])
+    startHeight = int(runCommand("curl --silent -d '{\"jsonrpc\": \"2.0\", \"method\": \"validators\", \"id\": \"dontcare\", \"params\": [null]}' -H 'Content-Type: application/json' https://rpc." + config["configurable"]["network"] + ".near.org | jq .result.epoch_start_height")["output"])
     blockLeft =  startHeight + config["configurable"]["epochBlockLength"] - latestBlockHeight
     progress = 1 - blockLeft / config["configurable"]["epochBlockLength"]
     return progress
 
 def isNewValidatorInNextEpoch():
-    isNew = os.popen(" near validators next | awk '/" + poolId + "/ {print $2}' ").read()
+    isNew = runCommand("near validators next | awk '/" + poolId + "/ {print $2}'")["output"]
     return 'New' in isNew
 
 def getCurrentPoolSize():
-    poolSizeString = os.popen(" near validators current | awk '/" + poolId + "/ {print $4}' ").read()
+    poolSizeString = runCommand("near validators current | awk '/" + poolId + "/ {print $4}'")["output"]
     if len(poolSizeString) > 0:
         return int(poolSizeString.replace(',', ''))
 
 def getNextPoolSize():
-    nextPoolSizeString = os.popen(" near validators next | awk '/" + poolId + "/ {print $6}' ").read()
+    nextPoolSizeString = runCommand("near validators next | awk '/" + poolId + "/ {print $6}'")["output"]
     if len(nextPoolSizeString) > 0:
         return int(nextPoolSizeString.replace(',', ''))
 
@@ -94,10 +122,16 @@ def getPoolSize():
     #raise Exception("Can't get current pool balance")
     return 0;
 
-def getStakedBalance(): 
+def getStakedBalance(fromString = ''): 
     findStringBeforeStakedBalance = 'Contract total staked balance is ';
     findStringAfterStakedBalance = '.';
-    response = os.popen('near call ' + poolId + ' unstake \'{"amount": "' + str(config["YNear"]) + '"}\' --accountId ' + accountId).read()
+
+    response = ''
+    if len(fromString) > 0:
+        response = fromString
+    else:
+        response = runCommand('near call ' + poolId + ' unstake \'{"amount": "' + str(config["YNear"]) + '"}\' --accountId ' + accountId)["output"]
+
     startPosition = response.find(findStringBeforeStakedBalance)
     if startPosition >= 0:
         endPosition = response.find(findStringAfterStakedBalance, startPosition)
@@ -105,30 +139,31 @@ def getStakedBalance():
             startBalancePosition = startPosition + len(findStringBeforeStakedBalance)
             if len(response[startBalancePosition:endPosition]):
                 return int(int(response[startBalancePosition:endPosition]) / config["YNear"])
+
     printAndLog("Can't get staked balance")
     raise Exception("Can't get staked balance")
 
 def getCurrentSeatPrice():
-    seatPriceString = os.popen(" near validators current | awk '/price/ {print substr($6, 1, length($6)-2)}' ").read()
+    seatPriceString = runCommand("near validators current | awk '/price/ {print substr($6, 1, length($6)-2)}'")["output"]
     return int(seatPriceString.replace(',', ''))
 
 def getNextSeatPrice():
-    seatPriceString = os.popen(" near validators next | awk '/price/ {print substr($7, 1, length($7)-2)}' ").read()
+    seatPriceString = runCommand("near validators next | awk '/price/ {print substr($7, 1, length($7)-2)}'")["output"]
     return int(seatPriceString.replace(',', ''))
 
 def getProposalsSeatPrice():
-    seatPriceString = os.popen(" near proposals | awk '/price =/ {print substr($15, 1, length($15)-1)}' ").read()
+    seatPriceString = runCommand("near proposals | awk '/price =/ {print substr($15, 1, length($15)-1)}'")["output"]
     return int(seatPriceString.replace(',', ''))
 
 def isKickedOutPool():
-    return bool(os.popen(" near validators next | grep 'Kicked out' | grep '" + poolId + "' ").read())
+    return bool(runCommand("near validators next | grep 'Kicked out' | grep '" + poolId + "'")["output"])
 
 def getKickedOutReason():
-    return os.popen(" curl --silent -d '{\"jsonrpc\": \"2.0\", \"method\": \"validators\", \"id\": \"dontcare\", \"params\": [null]}' -H 'Content-Type: application/json' https://rpc." + config["configurable"]["network"] + ".near.org | jq -c '.result.prev_epoch_kickout[] | select(.account_id | contains (\"" + poolId + "\"))' | jq .reason ").read()
+    return os.popen("curl --silent -d '{\"jsonrpc\": \"2.0\", \"method\": \"validators\", \"id\": \"dontcare\", \"params\": [null]}' -H 'Content-Type: application/json' https://rpc." + config["configurable"]["network"] + ".near.org | jq -c '.result.prev_epoch_kickout[] | select(.account_id | contains (\"" + poolId + "\"))' | jq .reason").read()
 
 def pingPool(): 
     printAndLog('Ping pool')
-    os.popen(" near call " + poolId + " ping '{}' --accountId " + accountId + " ")
+    runCommand("near call " + poolId + " ping '{}' --accountId " + accountId)
 
 # Function definitions end
 
@@ -165,18 +200,23 @@ printAndLog(f"Seat price: current {currentSeatPrice}, next {nextSeatPrice}, prop
 poolSize = getPoolSize()
 printAndLog(f"Pool size: {poolSize}")
 
-if epochProgress >= lastEpochProgress:
+needUpdateBalance = False;
+
+if maxSeatPrice != config['lastSeatPrice']:
+    needUpdateBalance = True;
+
+if epochProgress < lastEpochProgress:
+    needUpdateBalance = True;
+
+if needUpdateBalance == False:
     printAndLog(f'Wait next epoch. Epoch progress: {epochProgress} (previous {lastEpochProgress})')
     plexit()
 
+config['lastSeatPrice'] = maxSeatPrice;
+saveConfig(config)
+
 stakedBalance = getStakedBalance()
 printAndLog(f"Staked balance: {stakedBalance}")
-
-if config['currentWaitEpochCount'] > 0:
-    config['currentWaitEpochCount'] -= 1;
-    saveConfig(config)
-    printAndLog(f"Wait after next epoch count: {config['currentWaitEpochCount']}")
-    plexit()
 
 needStake = maxSeatPrice - stakedBalance
 needStakeYNear = needStake * config["YNear"]
@@ -190,18 +230,20 @@ else:
         if needUnstakeYNearWithReserve > 0:
             needUnstakeWithReserve = needUnstakeYNearWithReserve / config["YNear"]
             printAndLog(f"Unstake {needUnstakeYNearWithReserve} ({needUnstakeWithReserve}). Over balance " + str(config["configurable"]["poolOverBalance"]))
-            config['currentWaitEpochCount'] = config['waitNextEpochCountForChangeBalance']
-            saveConfig(config)
-            printAndLog(os.popen('near call ' + poolId + ' unstake \'{"amount": "' + str(needUnstakeYNearWithReserve) + '"}\' --accountId ' + accountId).read())
+            response = runCommand('near call ' + poolId + ' unstake \'{"amount": "' + str(needUnstakeYNearWithReserve) + '"}\' --accountId ' + accountId)
+            printAndLog(response["output"]);
+            if (response["code"] == 0):
+                printAndLog(f'New Staked Balance: {getStakedBalance(response["output"])}')
         else:
             printAndLog("Can't unstake. Reached reserve limit. It's ok")
     else:
         needStakeYNearWithReserve = needStakeYNear + config["configurable"]["poolOverBalance"] * config["YNear"]
         needStakeWithReserve = needStakeYNearWithReserve / config["YNear"]
         printAndLog(f"Stake {needStakeYNearWithReserve} ({needStakeWithReserve}). Over balance " + str(config["configurable"]["poolOverBalance"]))
-        config['currentWaitEpochCount'] = config['waitNextEpochCountForChangeBalance']
-        saveConfig(config)
-        printAndLog(os.popen('near call ' + poolId + ' stake \'{"amount": "' + str(needStakeYNearWithReserve) + '"}\' --accountId ' + accountId).read())
+        response = runCommand('near call ' + poolId + ' stake \'{"amount": "' + str(needStakeYNearWithReserve) + '"}\' --accountId ' + accountId)
+        printAndLog(response["output"]);
+        if (response["code"] == 0):
+            printAndLog(f'New Staked Balance: {getStakedBalance(response["output"])}')
 
 printAndLog("Script ends \r\n\r\n")
 

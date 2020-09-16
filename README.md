@@ -50,19 +50,19 @@ near-warchest-bot установится в директорию */home/near/nea
 
 **Вам необходимо** вписать свой ```poolId``` и ```accountId``` в соответствующие поля в файле config.json
 
-### Настройка запуска near-warchest-bot с интервалом 1 час
+### Настройка запуска near-warchest-bot с интервалом 30 минут
 
 ```crontab -e```
 
 В открывшемся окне редактирования Crontab добавьте в конец новую строку:
 
-```0 */1 * * * export NODE_ENV=betanet && /usr/bin/python3 /home/near/near-warchest-bot/near-warchest-bot.py > /tmp/near-warchest-bot.log 2>&1```
+```*/30 * * * * /usr/bin/python3 /home/near/near-warchest-bot/near-warchest-bot.py > /tmp/near-warchest-bot.log 2>&1```
 
 **✅Установка завершена**
 
 Вы можете запустить скрипт вручную, чтобы убедится что все работает:
 
-```export NODE_ENV=betanet && python3 /home/near/near-warchest-bot/near-warchest-bot.py```
+```python3 /home/near/near-warchest-bot/near-warchest-bot.py```
 
 Логи находятся в файле near-warchest-bot.log в той же директории.
 
@@ -122,19 +122,19 @@ Open config.json to configure the script
 
 **You need** to enter your ```polId``` and ```accountId``` in the corresponding fields in the config.json file
 
-### Setting the start of near-warchest-bot at 1 hour intervals
+### Setting the start of near-warchest-bot at 30 minutes intervals
 
 ```crontab -e```
 
 In the Crontab edit window that opens add a new line to the end:
 
-```0 */1 * * * export NODE_ENV=betanet && /usr/bin/python3 /home/near/near-warchest-bot/near-warchest-bot.py > /tmp/near-warchest-bot.log 2>&1```
+```*/30 * * * * /usr/bin/python3 /home/near/near-warchest-bot/near-warchest-bot.py > /tmp/near-warchest-bot.log 2>&1```
 
 **✅Installation completed**
 
 You can run the script manually to make sure that everything works:
 
-```export NODE_ENV=betanet && python3 /home/near/near-warchest-bot/near-warchest-bot.py```
+```python3 /home/near/near-warchest-bot/near-warchest-bot.py```
 
 The logs are in the near-warchest-bot.log file in the same directory.
 

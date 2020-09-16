@@ -42,7 +42,7 @@ near-warchest-bot установится в директорию */home/near/nea
 
 ```epochBlockLength``` - длина эпохи (на данный момент betanet = 10000, testnet = 43200, mainnet = 43200)
 
-```poolOverBalance``` - дополнительные токеыны NEAR для небольшого излишка на балансе (для подстраховки)
+```poolOverBalance``` - дополнительные токены NEAR для небольшого излишка на балансе (для подстраховки)
 
 ```enableLog``` - включен ли лог в файл
 
@@ -63,6 +63,14 @@ near-warchest-bot установится в директорию */home/near/nea
 Вы можете запустить скрипт вручную, чтобы убедится что все работает:
 
 ```python3 /home/near/near-warchest-bot/near-warchest-bot.py```
+
+Логи находятся в файле near-warchest-bot.log в той же директории.
+
+### Обновление near-warchest-bot
+
+Перейдите в директорию расположения скрипта и вытяните обновления:
+
+```cd /home/near/near-warchest-bot && git pull```
 
 ## Description [EN]
 
@@ -127,3 +135,11 @@ In the Crontab edit window that opens add a new line to the end:
 You can run the script manually to make sure that everything works:
 
 ```python3 /home/near/near-warchest-bot/near-warchest-bot.py```
+
+The logs are in the near-warchest-bot.log file in the same directory.
+
+### Update near-warchest-bot
+
+Go to the script directory and pull out the updates:
+
+```cd /home/near/near-warchest-bot && git pull```

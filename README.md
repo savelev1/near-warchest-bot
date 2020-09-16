@@ -62,7 +62,7 @@ near-warchest-bot установится в директорию */home/near/nea
 
 Вы можете запустить скрипт вручную, чтобы убедится что все работает:
 
-```python3 /home/near/near-warchest-bot/near-warchest-bot.py```
+```export NODE_ENV=betanet && python3 /home/near/near-warchest-bot/near-warchest-bot.py```
 
 Логи находятся в файле near-warchest-bot.log в той же директории.
 
@@ -134,7 +134,7 @@ In the Crontab edit window that opens add a new line to the end:
 
 You can run the script manually to make sure that everything works:
 
-```python3 /home/near/near-warchest-bot/near-warchest-bot.py```
+```export NODE_ENV=betanet && python3 /home/near/near-warchest-bot/near-warchest-bot.py```
 
 The logs are in the near-warchest-bot.log file in the same directory.
 

@@ -4,8 +4,6 @@
 
 near-warchest-bot это скрипт для валидаторов [NEAR](https://near.org/), который управляет вашим местом валидатора и поддерживает его количество до одного. Ведет логи, определяет причину изгнания из списка валидаторов, пингует пул.
 
- ⚠️ Внимание! Текущий баланс пула берется из логов метода unstake, так как в логах он обновляется мгновенно, а не через одну эпоху.
-
 ## Установка
 
 ### Установка зависимостей
@@ -75,8 +73,6 @@ near-warchest-bot установится в директорию */home/near/nea
 ## Description [EN]
 
 near-warchest-bot is a script for [NEAR](https://near.org/) validators that manage your validator seat and maintain its number to one. It keeps logs, determines the reason for kicked out from the validator list, pings the pool.
-
- ⚠️ Attention! The current pool balance is taken from the logs of the unstake method, because in the logs it is updated instantly, not after one epoch.
 
 ## Installation
 

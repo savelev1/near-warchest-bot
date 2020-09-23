@@ -7,6 +7,7 @@ import json
 import subprocess
 import shlex
 import re
+import math
 
 configFileName = 'config.json';
 
@@ -92,8 +93,14 @@ def saveConfig(config):
     with open(getFullPath(configFileName), "w") as file:
         json.dump(config, file)
 
+def getEpochLatestBlockHeight():
+    return int(runCommand("curl --silent https://rpc." + config["configurable"]["network"] + ".near.org/status | jq .sync_info.latest_block_height")["output"]);
+
+def getCurrentEpochNum():
+    return math.ceil(getEpochLatestBlockHeight() / config["configurable"]["epochBlockLength"]);
+
 def getEpochProgress():
-    latestBlockHeight = int(runCommand("curl --silent https://rpc." + config["configurable"]["network"] + ".near.org/status | jq .sync_info.latest_block_height")["output"])
+    latestBlockHeight = getEpochLatestBlockHeight()
     startHeight = int(runCommand("curl --silent -d '{\"jsonrpc\": \"2.0\", \"method\": \"validators\", \"id\": \"dontcare\", \"params\": [null]}' -H 'Content-Type: application/json' https://rpc." + config["configurable"]["network"] + ".near.org | jq .result.epoch_start_height")["output"])
     blockLeft =  startHeight + config["configurable"]["epochBlockLength"] - latestBlockHeight
     progress = 1 - blockLeft / config["configurable"]["epochBlockLength"]
@@ -178,6 +185,8 @@ epochProgress = getEpochProgress()
 config['lastEpochProgress'] = epochProgress
 saveConfig(config)
 
+printAndLog(f"Epoch #{str(getCurrentEpochNum())}, progress: {str(epochProgress)}, latest block height: {str(getEpochLatestBlockHeight())}");
+
 if isKickedOutPool():
     printAndLog("Pool is kicked out in next epoch")
 
@@ -241,4 +250,3 @@ else:
 printAndLog("Script ends \r\n\r\n")
 
 # Script body end
-
